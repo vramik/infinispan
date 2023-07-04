@@ -664,7 +664,8 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
          }
          return null;
       }
-
+      log.warnf("Entry: %s; %s", entry.getKey(), entry.getValue());
+      log.warnf("  --Context: %s", ctx);
       return entry.getValue();
    }
 

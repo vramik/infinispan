@@ -83,6 +83,7 @@ public class EntryFactoryImpl implements EntryFactory {
          } else if (isOwner || readEntry.isL1Entry()) {
             if (readEntry.canExpire()) {
                CompletionStage<Boolean> expiredStage = expirationManager.handlePossibleExpiration(readEntry, segment, hasLock);
+               log.warnf("expiredStage: %s", expiredStage);
                if (CompletionStages.isCompletedSuccessfully(expiredStage)) {
                   Boolean expired = CompletionStages.join(expiredStage);
                   handleExpiredEntryContextAddition(expired, ctx, readEntry, key, isOwner);
@@ -103,6 +104,7 @@ public class EntryFactoryImpl implements EntryFactory {
    private void handleExpiredEntryContextAddition(Boolean expired, InvocationContext ctx, InternalCacheEntry readEntry,
          Object key, boolean isOwner) {
       // Multi-key commands perform the expiration check in parallel, so they need synchronization
+      log.warnf("handleExpiredEntryContextAddition: Expired %s: %b; isOwner: %b", key, expired, isOwner);
       if (expired == Boolean.FALSE) {
          addReadEntryToContext(ctx, readEntry, key);
       } else if (isOwner) {
@@ -121,6 +123,7 @@ public class EntryFactoryImpl implements EntryFactory {
       if (log.isTraceEnabled()) {
          log.tracef("Wrap %s for read. Entry=%s", toStr(key), cacheEntry);
       }
+      log.warnf("Wrap %s for read. Entry=%s; Context: %s", toStr(key), cacheEntry, ctx);
       ctx.putLookedUpEntry(key, cacheEntry);
    }
 

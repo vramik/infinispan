@@ -249,6 +249,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    }
 
    CompletableFuture<Boolean> handleMaxIdleExpireEntry(InternalCacheEntry<K, V> entry, boolean isWrite, long currentTime) {
+       log.warnf("handleMaxIdleExpireEntry for key: %s, currentTime: %d", entry.getKey(), currentTime);
       return handleEitherExpiration(entry.getKey(), entry.getValue(), true, entry.getMaxIdle(), isWrite)
               .thenCompose(expired -> {
                  if (!expired) {
@@ -259,6 +260,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                     return checkExpiredMaxIdle(entry, keyPartitioner.getSegment(entry.getKey()), currentTime)
                           .thenApply(ignore -> Boolean.FALSE);
                  }
+                 log.tracef("Expired %s; returning completedTrue", entry.getKey());
                  return CompletableFutures.completedTrue();
               });
    }
@@ -304,6 +306,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          log.tracef("There is a pending expiration removal for key %s, waiting until it completes.", key);
       }
       // This means there was another thread that found it had expired via max idle or we have optimistic tx
+      log.tracef("This means there was another thread that found it had expired via max idle or we have optimistic tx. Returning %s", previousFuture);
       return previousFuture;
    }
 
@@ -351,6 +354,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       } else {
          // This means it expired transiently - this will block user until we confirm the entry is okay
          future = handleMaxIdleExpireEntry(entry, isWrite, currentTime);
+         log.tracef("This means it expired transiently - this will block user until we confirm the entry is okay; completable: %s", future);
       }
 
       return future.handle((expired, t) -> {
